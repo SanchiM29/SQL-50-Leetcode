@@ -1,0 +1,28 @@
+WITH daily AS (
+  SELECT
+    visited_on,
+    SUM(amount) AS day_sum
+  FROM Customer
+  GROUP BY visited_on
+),
+win AS (
+  SELECT
+    visited_on,
+    day_sum,
+    SUM(day_sum) OVER (
+      ORDER BY visited_on
+      ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS seven_sum,
+    COUNT(*) OVER (
+      ORDER BY visited_on
+      ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS cnt
+  FROM daily
+)
+SELECT
+  visited_on,
+  seven_sum AS amount,   -- ✅ total for 7-day window
+  ROUND(seven_sum / 7, 2) AS average_amount
+FROM win
+WHERE cnt = 7
+ORDER BY visited_on;
